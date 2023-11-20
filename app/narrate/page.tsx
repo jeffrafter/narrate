@@ -7,7 +7,7 @@ import { Message } from "ai";
 
 export default function Chat() {
   const finish = (content: string) => {
-    console.log("finished");
+    setStatus("saying");
     fetch("/api/narrate/say", {
       method: "POST",
       headers: {
@@ -21,9 +21,9 @@ export default function Chat() {
         return response.blob();
       })
       .then((blob) => {
+        setStatus("ready");
         const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audio.play();
+        setAudioSrc(url);
       });
   };
 
@@ -36,7 +36,9 @@ export default function Chat() {
 
   const webcamRef = useRef(null as any);
   const formRef = useRef(null as any);
-  const [imgSrc, setImgSrc] = useState(null);
+  const [imgSrc, setImgSrc] = useState(null as string | null);
+  const [audioSrc, setAudioSrc] = useState(null as string | null);
+  const [status, setStatus] = useState("ready");
 
   const retake = () => {
     setImgSrc(null);
@@ -57,7 +59,7 @@ export default function Chat() {
   const submitForm = (e: any) => {
     // Encode the image as jpeg base64
     if (!imgSrc) return;
-
+    setStatus("analyzing");
     handleSubmit(e, {
       data: {
         imageUrl: imgSrc as string,
@@ -73,35 +75,49 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.length > 0
-        ? messages.map((m) => (
-            <div key={m.id} className="whitespace-pre-wrap">
-              {m.role === "user" ? "User: " : "David: "}
-              {m.content}
-            </div>
-          ))
-        : null}
-
       <form onSubmit={submitForm}>
-        <div className="webcam-container">
+        <div className="webcam-container border-b-orange-50 w-[250px] h-[250px] bg-gray-100">
+          <Webcam
+            videoConstraints={videoConstraints}
+            audio={false}
+            height={250}
+            width={250}
+            ref={webcamRef}
+            mirrored={true}
+            screenshotFormat="image/jpeg"
+          />
+        </div>
+        <div className="btn-container mt-2">
+          <button
+            onClick={capture}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Capture photo
+          </button>
+        </div>
+        <br />
+        <div>
           <div className="w-[250px] h-[250px] border-emerald-50">
-            {imgSrc ? (
-              <img src={imgSrc} alt="webcam" />
-            ) : (
-              <Webcam
-                videoConstraints={videoConstraints}
-                audio={false}
-                height={250}
-                width={250}
-                ref={webcamRef}
-                mirrored={true}
-                screenshotFormat="image/jpeg"
-              />
+            {imgSrc && <img src={imgSrc} alt="webcam" />}
+            <br />
+            {status === "analyzing" && <div>David is watching...</div>}
+            {status === "saying" && <div>David is warming up his voice...</div>}
+            {audioSrc && (
+              <audio controls autoPlay playsInline src={audioSrc}></audio>
             )}
+            <br />
+            <br />
           </div>
-          <div className="btn-container">
-            <button onClick={capture}>Capture photo</button>
-          </div>
+          <br />
+          <br />
+          {messages.length > 0
+            ? messages.map((m) => (
+                <div key={m.id} className="whitespace-pre-wrap">
+                  {m.role === "user" ? "User: " : "David: "}
+                  {m.content}
+                </div>
+              ))
+            : null}
         </div>
       </form>
     </div>

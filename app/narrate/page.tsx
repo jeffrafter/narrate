@@ -39,6 +39,7 @@ export default function Chat() {
   const [imgSrc, setImgSrc] = useState(null as string | null);
   const [audioSrc, setAudioSrc] = useState(null as string | null);
   const [status, setStatus] = useState("ready");
+  const [frontFacing, setFrontFacing] = useState(true);
 
   const retake = () => {
     setImgSrc(null);
@@ -70,13 +71,18 @@ export default function Chat() {
   const videoConstraints = {
     width: 250,
     height: 250,
-    facingMode: "user",
+    facingMode: frontFacing ? "user" : "environment",
   };
 
   return (
     <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
       <form onSubmit={submitForm}>
-        <div className="webcam-container border-b-orange-50 w-[250px] h-[250px] bg-gray-100">
+        <div
+          className="webcam-container border-b-orange-50 w-[250px] h-[250px] bg-gray-100"
+          onClick={() => {
+            setFrontFacing(!frontFacing);
+          }}
+        >
           <Webcam
             videoConstraints={videoConstraints}
             audio={false}
@@ -102,19 +108,16 @@ export default function Chat() {
             <br />
             {status === "analyzing" && <div>David is watching...</div>}
             {status === "saying" && <div>David is warming up his voice...</div>}
-            {audioSrc && (
-              <audio controls autoPlay playsInline src={audioSrc}></audio>
-            )}
-            <br />
-            <br />
           </div>
-          <br />
-          <br />
+          {audioSrc && (
+            <div className="py-4">
+              <audio controls autoPlay playsInline src={audioSrc}></audio>
+            </div>
+          )}
           {messages.length > 0
             ? messages.map((m) => (
-                <div key={m.id} className="whitespace-pre-wrap">
-                  {m.role === "user" ? "User: " : "David: "}
-                  {m.content}
+                <div key={m.id} className="whitespace-pre-wrap my-2">
+                  {m.role !== "user" && m.content}
                 </div>
               ))
             : null}

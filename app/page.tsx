@@ -1,28 +1,50 @@
-'use client';
+"use client";
 
-import { useChat } from 'ai/react';
+import Link from "next/link";
+import { useState } from "react";
 
 export default function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, data } = useChat();
+  const [code, setCode] = useState("");
+  const [status, setStatus] = useState("");
+
+  const submitForm = async (e: any) => {
+    e.preventDefault();
+    const response = await fetch("/api/narrate/code", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code }),
+    });
+    console.log("response", response);
+    if (response.ok) {
+      setStatus("Success!");
+    } else {
+      setStatus("Error!");
+    }
+  };
+
   return (
     <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.length > 0
-        ? messages.map(m => (
-            <div key={m.id} className="whitespace-pre-wrap">
-              {m.role === 'user' ? 'User: ' : 'AI: '}
-              {m.content}
-            </div>
-          ))
-        : null}
-
-      <form onSubmit={handleSubmit}>
+      <h1>Please enter your code</h1>
+      <h5>{status}</h5>
+      <br />
+      <form onSubmit={submitForm}>
         <input
-          className="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={handleInputChange}
+          className="p-2 mb-8 border border-gray-300 rounded shadow-xl"
+          value={code}
+          placeholder="Enter your code"
+          onChange={(e) => {
+            setCode(e.target.value);
+          }}
         />
       </form>
+      <br />
+      <br />
+      <br />
+      <Link href="/narrate" className="whitespace-pre-wrap">
+        Narrate
+      </Link>
     </div>
   );
 }

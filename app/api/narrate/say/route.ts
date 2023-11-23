@@ -7,8 +7,25 @@ const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || "";
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "";
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1/text-to-speech";
 
+const CODES =
+  "bonobos,giraffe,hippopotamus,hyena,meerkat,okapi,orangutan,porcupine,zebra";
+
 export async function POST(req: Request, res: NextApiResponse) {
   const { content } = await req.json();
+
+  // Get the code from the cookie animal
+  const cookie = req.headers.get("cookie");
+  const code = cookie?.split("animal=")[1]?.split(";")[0];
+
+  if (!code) {
+    return new Response("No code provided", { status: 400 });
+  }
+
+  // Check that the code is in the process env codes (split by comma)
+  const codes = CODES.split(",");
+  if (!codes.includes(code)) {
+    return new Response("Invalid code", { status: 400 });
+  }
 
   const response = await fetch(`${ELEVENLABS_API_URL}/${ELEVENLABS_VOICE_ID}`, {
     method: "POST",

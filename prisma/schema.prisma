@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-1.0.x"]
+}
+
+model Account {
+  id                       String   @id @default(cuid())
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?  @db.Text
+  access_token             String?  @db.Text
+  refresh_token_expires_in Int?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?  @db.Text
+  session_state            String?
+  oauth_token_secret       String?
+  oauth_token              String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id            String                    @id @default(cuid())
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  email         String?                   @unique
+  token         String?                   @unique @default(cuid())
+  emailVerified Boolean?                  @default(false)
+  password      String?
+  role          String?                   @default("user")
+  name          String?
+  imageId       String?
+  image         String?                   @db.Text
+  status        String?                   @default("new")
+  accounts      Account[]
+  sessions      Session[]
+  assets        Asset[]
+  preferences   NotificationPreferences[]
+  notifications Notification[]
+  conversations Conversation[]
+  messages      ConversationMessage[]
+
+  @@index([email])
+  @@index([token])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Asset {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  uploadedAt  DateTime?
+  state       String
+  size        Int
+  contentType String
+  filename    String
+  md5         String?
+  name        String?
+  userId      String
+  documentId  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model NotificationPreferences {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  announcements Boolean @default(true)
+  messages      Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id            String    @id @default(cuid())
+  userId        String?
+  category      String
+  template      String
+  delivery      String
+  promotional   Boolean   @default(false)
+  transactional Boolean   @default(false)
+  priority      Int       @default(0)
+  clicked       Int       @default(0)
+  read          Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deliveredAt   DateTime?
+  failedAt      DateTime?
+  failedReason  String?
+  returnedAt    DateTime?
+  markedSpamAt  DateTime?
+  readAt        DateTime?
+  clickedAt     DateTime?
+  ignoredAt     DateTime?
+  deletedAt     DateTime?
+  expiresAt     DateTime?
+  email         String?
+  from          String?
+  subject       String?
+  body          String?   @db.MediumText
+  data          String?   @db.MediumText
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  token     String
+  userId    String
+
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ConversationMessage ConversationMessage[]
+
+  @@index([userId])
+}
+
+model ConversationMessage {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  conversationId String
+  userId         String
+  voiceId        String?
+  photo          String?  @db.Text
+  photoSize      Int?
+  photoWidth     Int?
+  photoHeight    Int?
+  message        String?  @db.Text
+  audio          String?  @db.Text
+  tokens         Int      @default(0)
+  characters     Int      @default(0)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([userId])
+}

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Chat() {
   const [code, setCode] = useState("");
   const [status, setStatus] = useState("");
+  const router = useRouter();
 
   const submitForm = async (e: any) => {
     e.preventDefault();
@@ -19,6 +21,7 @@ export default function Chat() {
     console.log("response", response);
     if (response.ok) {
       setStatus("Success!");
+      router.push("/narrate");
     } else {
       setStatus("Error!");
     }

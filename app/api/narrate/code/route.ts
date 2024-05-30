@@ -1,8 +1,7 @@
+import prisma from "@/util/db";
+
 // IMPORTANT! Set the runtime to edge
 export const runtime = "edge";
-
-const CODES =
-  "bonobos,giraffe,hippopotamus,hyena,meerkat,okapi,orangutan,porcupine,zebra";
 
 export async function POST(req: Request) {
   // Messages represent all of the history of the narration
@@ -13,8 +12,12 @@ export async function POST(req: Request) {
   }
 
   // Check that the code is in the process env codes (split by comma)
-  const codes = CODES.split(",");
-  if (!codes.includes(code)) {
+  const user = await prisma.user.findUnique({
+    where: {
+      token: code,
+    },
+  });
+  if (!user) {
     return new Response("Invalid code", { status: 400 });
   }
 

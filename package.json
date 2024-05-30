@@ -6,9 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:reset": "prisma migrate reset --skip-seed",
+    "db:push": "prisma db push",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "db:studio:prod": "DATABASE_URL=mysql://root@127.0.0.1:3309/narrate prisma studio",
+    "db:generate": "prisma generate"
+  },
+  "prisma": {
+    "seed": "tsx ./seeds/seeds.ts"
   },
   "dependencies": {
+    "@prisma/client": "^4.11.0",
     "ai": "2.2.24",
     "next": "14.0.1",
     "openai": "4.16.1",
@@ -24,7 +34,10 @@
     "eslint": "^7.32.0",
     "eslint-config-next": "13.4.12",
     "postcss": "^8.4.23",
+    "prisma": "^4.11.0",
     "tailwindcss": "^3.3.2",
+    "ts-node": "^10.9.1",
+    "tsx": "^4.4.0",
     "typescript": "5.1.3"
   }
 }

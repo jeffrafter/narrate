@@ -6,7 +6,51 @@ import { useRef, useState, useCallback } from "react";
 import { Message } from "ai";
 
 export default function Chat() {
-  const finish = (content: string) => {
+  const [status, setStatus] = useState("ready");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [conversation, setConversation] = useState(null as string | null);
+  const [imgSrc, setImgSrc] = useState(null as string | null);
+  const [audioSrc, setAudioSrc] = useState(null as string | null);
+  const [frontFacing, setFrontFacing] = useState(true);
+  const webcamRef = useRef(null as any);
+  const formRef = useRef(null as any);
+
+  const narrateStart = async () => {
+    if (conversation) return;
+    const response = await fetch("/api/narrate/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      setStatus("error");
+      setStatusMessage("Failed to start conversation");
+      throw new Error("Failed to start conversation");
+    }
+    const json = await response.json();
+    setConversation(json.conversation);
+  };
+
+  const narrateAnalyze = async () => {
+    if (!conversation) return;
+    const response = await fetch("/api/narrate/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ conversation }),
+    });
+    if (!response.ok) {
+      setStatus("error");
+      setStatusMessage("Failed to analyze conversation");
+      throw new Error("Failed to analyze conversation");
+    }
+    const json = await response.json();
+    setConversation(json.conversation);
+  };
+
+  const streamResponseFinish = (content: string) => {
     setStatus("saying");
     fetch("/api/narrate/say", {
       method: "POST",
@@ -30,22 +74,10 @@ export default function Chat() {
   const { messages, setInput, handleSubmit } = useChat({
     api: "/api/narrate/analyze",
     onFinish: (message: Message) => {
-      finish(message.content);
+      streamResponseFinish(message.content);
     },
   });
 
-  const webcamRef = useRef(null as any);
-  const formRef = useRef(null as any);
-  const [imgSrc, setImgSrc] = useState(null as string | null);
-  const [audioSrc, setAudioSrc] = useState(null as string | null);
-  const [status, setStatus] = useState("ready");
-  const [frontFacing, setFrontFacing] = useState(true);
-
-  const retake = () => {
-    setImgSrc(null);
-  };
-
-  // create a capture function
   const capture = useCallback(
     (e: any) => {
       if (!webcamRef.current) return;
